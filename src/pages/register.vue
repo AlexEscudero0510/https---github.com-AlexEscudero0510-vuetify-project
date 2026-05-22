@@ -1,14 +1,19 @@
 <template>
-  <div>
+  <div class="d-flex justify-center align-center" style="height: 100vh">
+
     <v-card
-      class="mx-auto pa-8"
-      elevation="3"
-      max-width="448"
+      class="pa-8"
+      elevation="5"
+      max-width="450"
+      width="100%"
       rounded="lg"
     >
-      <h2 class="text-center mb-6">Registro Usuario</h2>
 
-      <!-- EMAIL -->
+      <h2 class="text-center mb-6">
+        Registro Usuario
+      </h2>
+
+      <!-- CORREO -->
       <v-text-field
         v-model="username"
         label="Correo Electrónico"
@@ -16,7 +21,7 @@
         variant="outlined"
         density="compact"
         class="mb-4"
-      ></v-text-field>
+      />
 
       <!-- PASSWORD -->
       <v-text-field
@@ -29,7 +34,7 @@
         variant="outlined"
         density="compact"
         class="mb-4"
-      ></v-text-field>
+      />
 
       <!-- CONFIRM PASSWORD -->
       <v-text-field
@@ -42,9 +47,9 @@
         variant="outlined"
         density="compact"
         class="mb-6"
-      ></v-text-field>
+      />
 
-      <!-- ERROR -->
+      <!-- ALERTA -->
       <v-alert
         v-if="errorMessage"
         type="error"
@@ -55,50 +60,101 @@
       </v-alert>
 
       <!-- BOTÓN -->
-      <v-card-actions>
-        <v-btn
-          :loading="loading"
-          color="primary"
-          block
-          size="large"
-          rounded="lg"
-          @click="register"
-        >
-          Registrarse
-        </v-btn>
-      </v-card-actions>
+      <v-btn
+        :loading="loading"
+        color="primary"
+        block
+        size="large"
+        rounded="lg"
+        @click="register"
+      >
+        Registrarse
+      </v-btn>
+
     </v-card>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { createUserWithEmailAndPassword } from 'firebase/auth'
+import { auth } from '../firebase.js'
 
+// Router
+const router = useRouter()
+
+// Variables
 const loading = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 
+const errorMessage = ref('')
+
 const username = ref('')
 const password = ref('')
 const confirmPassword = ref('')
-const errorMessage = ref('')
 
 // Función de registro
-const register = () => {
-    if(username.value === '' || password.value === ''){
-        errorMessage.value = 'Favor de completar los datos'
-        return
-    }
+const register = async () => {
 
-    if(password.value != confirmPassword.value){
-        errorMessage.value = 'las contraseñas no coinciden'
-        return
-    }
-
-    try{
-
-    }catch(error){
-        errorMessage.value="Ocurrio un error"
-    }
+  // Validar campos vacíos
+  if (username.value === '' || password.value === '') {
+    errorMessage.value = 'Favor de completar los datos'
+    return
   }
+
+  // Validar contraseñas
+  if (password.value !== confirmPassword.value) {
+    errorMessage.value = 'Las contraseñas no coinciden'
+    return
+  }
+
+  try {
+
+    loading.value = true
+    errorMessage.value = ''
+
+    // Crear usuario en Firebase
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      username.value,
+      password.value
+    )
+
+    console.log(userCredential)
+
+    // Redireccionar
+    router.push('/')
+
+  } catch (error: any) {
+
+    console.log(error)
+
+    switch (error.code) {
+
+      case 'auth/invalid-email':
+        errorMessage.value = 'Correo inválido'
+        break
+
+      case 'auth/email-already-in-use':
+        errorMessage.value = 'El correo ya está registrado'
+        break
+
+      case 'auth/weak-password':
+        errorMessage.value = 'La contraseña debe tener mínimo 6 caracteres'
+        break
+
+      default:
+        errorMessage.value = 'Ocurrió un error al registrar'
+        break
+    }
+
+  } finally {
+
+    loading.value = false
+
+  }
+}
 </script>

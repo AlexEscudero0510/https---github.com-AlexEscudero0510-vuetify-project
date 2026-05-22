@@ -12,16 +12,22 @@
       max-width="448"
       rounded="lg"
     >
-      <div class="text-body-large text-medium-emphasis">Account</div>
 
+      <div class="text-body-large text-medium-emphasis">
+        Account
+      </div>
+
+      <!-- EMAIL -->
       <v-text-field
         density="compact"
-        v-model="Email"
+        v-model="username"
         placeholder="Email address"
         prepend-inner-icon="mdi-email-outline"
         variant="outlined"
+        class="mb-4"
       ></v-text-field>
 
+      <!-- PASSWORD -->
       <div class="text-body-large text-medium-emphasis d-flex align-center justify-space-between">
         Password
 
@@ -31,7 +37,8 @@
           rel="noopener noreferrer"
           target="_blank"
         >
-          Forgot login password?</a>
+          Forgot login password?
+        </a>
       </div>
 
       <v-text-field
@@ -45,16 +52,19 @@
         @click:append-inner="visible = !visible"
       ></v-text-field>
 
+      <!-- INFO -->
       <v-card
-        class="mb-12"
+        class="mb-6"
         color="surface-variant"
         variant="tonal"
       >
         <v-card-text class="text-medium-emphasis text-body-small">
-          Warning: After 3 consecutive failed login attempts, you account will be temporarily locked for three hours. If you must login now, you can also click "Forgot login password?" below to reset the login password.
+          Warning: After 3 consecutive failed login attempts,
+          your account will be temporarily locked for three hours.
         </v-card-text>
       </v-card>
 
+      <!-- ERROR -->
       <v-alert
         v-if="errorMessage"
         type="error"
@@ -63,9 +73,10 @@
         class="mt-4 mb-6"
         border="start"
       >
-      {{errorMessage}}
+        {{ errorMessage }}
       </v-alert>
 
+      <!-- BOTON LOGIN -->
       <v-btn
         class="mb-8"
         color="blue"
@@ -77,41 +88,67 @@
         Log In
       </v-btn>
 
+      <!-- REGISTRO -->
       <v-card-text class="text-center">
-        <a
+        <RouterLink
+          to="/register"
           class="text-blue text-decoration-none"
-          href="#"
-          rel="noopener noreferrer"
-          target="_blank"
         >
-          Sign up now <v-icon icon="mdi-chevron-right"></v-icon>
-        </a>
+          Sign up now
+          <v-icon icon="mdi-chevron-right"></v-icon>
+        </RouterLink>
       </v-card-text>
+
     </v-card>
   </div>
 </template>
+
 <script setup>
-  import { ref } from 'vue'
-  import { useRoute } from 'vue-router'
-  import { singInWithEmailAndPassword } from 'firebase/auth'
-  import { aurth } from '@/firebase.js'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { auth } from '@/firebase.js'
 
-  const username = ref ('')
-  const password = ref ('')
-  const errorMessage = ref ('')
-  const route = useRoute()
+// VARIABLES
+const username = ref('')
+const password = ref('')
+const errorMessage = ref('')
+const visible = ref(false)
 
-  const login = async () =>{
-    try{
-      const userCredential = await singInWithEmailAndPassword(AuthenticatorAssertionResponse,username.value,password.value)
-      errorMessage.value = "Login Correcto"
-    }catch (error){
-        errorMessage.value = "Ocurrio un error"
-    }
+// ROUTER
+const router = useRouter()
 
+// LOGIN
+const login = async () => {
+
+  // VALIDAR CAMPOS
+  if (username.value === '' || password.value === '') {
+
+    errorMessage.value = 'Favor de completar los datos'
+    return
   }
 
-  //mio
-  const visible = ref(false)
-</script>
+  try {
 
+    // LOGIN FIREBASE
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      username.value,
+      password.value
+    )
+
+    console.log(userCredential)
+
+    errorMessage.value = ''
+
+    // REDIRECCIONAR
+    router.push('/')
+
+  } catch (error) {
+
+    console.log(error)
+
+    errorMessage.value = 'Correo o contraseña incorrectos'
+  }
+}
+</script>
